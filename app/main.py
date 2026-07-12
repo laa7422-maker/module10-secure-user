@@ -1,3 +1,4 @@
+from app.security import verify_password, create_access_token
 from fastapi import FastAPI, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
@@ -39,3 +40,18 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 
     db.refresh(new_user)
     return new_user
+
+@app.post("/login", response_model=schemas.Token)
+def login(credentials: schemas.LoginRequest, db: Session = Depends(get_db)):
+    """Authenticate a user and issue a JWT access token."""
+
+    user = db.query(models.User).filter(models.User.username == credentials.username).first()
+
+    if not user or not verify_password(credentials.password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+        )
+
+    token = create_access_token(data={"sub": user.username})
+    return {"access_token": token, "token_type": "bearer"}
