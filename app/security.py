@@ -1,3 +1,6 @@
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -36,3 +39,12 @@ def decode_access_token(token: str) -> dict | None:
         return payload
     except JWTError:
         return None
+    # Tells FastAPI where clients should send their username/password to get a token.
+# This also powers the "Authorize" button in the /docs UI.
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+
+
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(lambda: None)):
+    """Placeholder — replaced in main.py to avoid circular imports."""
+    pass
+

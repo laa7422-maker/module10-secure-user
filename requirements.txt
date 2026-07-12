@@ -10,3 +10,7 @@ pytest-cov
 pytest
 httpx
 python-jose[cryptography]
+pytest
+httpx
+pytest
+httpx
