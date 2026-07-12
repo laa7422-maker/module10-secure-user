@@ -1,3 +1,6 @@
+from app import security
+from datetime import timedelta
+from fastapi.security import OAuth2PasswordRequestForm
 from fastapi import FastAPI, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
@@ -12,31 +15,6 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
-
-# ⬇️ ⬇️ ⬇️  ADD THIS NEW FUNCTION HERE — after `app = FastAPI()`, before any routes  ⬇️ ⬇️ ⬇️
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> models.User:
-    """Decode the JWT, find the matching user, or reject the request."""
-
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
-    payload = decode_access_token(token)
-    if payload is None:
-        raise credentials_exception
-
-    username = payload.get("sub")
-    if username is None:
-        raise credentials_exception
-
-    user = db.query(models.User).filter(models.User.username == username).first()
-    if user is None:
-        raise credentials_exception
-
-    return user
-# ⬆️ ⬆️ ⬆️  END of new function  ⬆️ ⬆️ ⬆️
 
 
 # --- your existing /users route stays exactly as-is ---
@@ -53,7 +31,6 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db.refresh(new_user)
     return new_user
 
-
 # --- your existing /login route stays exactly as-is ---
 @app.post("/login", response_model=schemas.Token)
 def login(credentials: schemas.LoginRequest, db: Session = Depends(get_db)):
@@ -65,6 +42,57 @@ def login(credentials: schemas.LoginRequest, db: Session = Depends(get_db)):
         )
     token = create_access_token(data={"sub": user.username})
     return {"access_token": token, "token_type": "bearer"}
+from fastapi.security import OAuth2PasswordBearer
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+
+def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db),
+) -> models.User:
+    credentials_exception = HTTPException(
+        status_code=401,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    payload = security.decode_access_token(token)
+    if payload is None:
+        raise credentials_exception
+
+    username: str | None = payload.get("sub")
+    if username is None:
+        raise credentials_exception
+
+    user = db.query(models.User).filter(models.User.username == username).first()
+    if user is None:
+        raise credentials_exception
+
+    return user
+@app.post("/token")
+def login_for_access_token(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db),
+):
+    user = db.query(models.User).filter(
+        models.User.username == form_data.username
+    ).first()
+
+    if not user or not security.verify_password(form_data.password, user.password_hash):
+        raise HTTPException(
+            status_code=401,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    access_token = security.create_access_token(
+        data={"sub": user.username},
+        expires_delta=timedelta(minutes=security.ACCESS_TOKEN_EXPIRE_MINUTES),
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
+
+
 
 
 # ⬇️ ⬇️ ⬇️  ADD THIS NEW ROUTE HERE — anywhere after get_current_user is defined  ⬇️ ⬇️ ⬇️

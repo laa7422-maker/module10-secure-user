@@ -7,7 +7,7 @@ from app.main import app
 from app.database import Base, get_db
 
 # Separate SQLite file just for tests
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
+SQLALCHEMY_DATABASE_URL = "sqlite:///./test_temp.db"
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
@@ -32,3 +32,20 @@ def client():
     with TestClient(app) as test_client:
         yield test_client
     Base.metadata.drop_all(bind=engine)
+@pytest.fixture(scope="function")
+def client():
+    Base.metadata.create_all(bind=engine)
+    with TestClient(app) as test_client:
+        yield test_client
+    Base.metadata.drop_all(bind=engine)
+
+
+@pytest.fixture
+def existing_user(client):
+    payload = {
+        "username": "loginuser",
+        "email": "loginuser@example.com",
+        "password": "correctpassword123",
+    }
+    client.post("/users", json=payload)
+    return payload
