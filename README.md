@@ -17,3 +17,25 @@ Once running, visit the interactive API docs at:
 ```
 http://localhost:8000/docs
 ```
+## 🧪 Running Tests Locally
+
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Run the test suite with coverage:
+
+```bash
+pytest --cov=app --cov-report=term-missing
+```
+
+This project maintains 95% test coverage across 18 tests, covering
+registration, login, JWT token lifecycle, and protected routes.
+
+## 🔗 Docker Hub Repository
+
+The image is automatically built and pushed via GitHub Actions on every push to `main`.
+
+**View on Docker Hub:** https://hub.docker.com/r/al7amdulillah/fastapi-user-app
