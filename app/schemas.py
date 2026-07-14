@@ -51,6 +51,20 @@ class CalculationCreate(BaseModel):
         return self
 
 
+class CalculationUpdate(BaseModel):
+    """Schema for editing an existing calculation. All fields optional
+    to support partial updates (PATCH-style edits)."""
+    a: Optional[float] = None
+    b: Optional[float] = None
+    type: Optional[CalculationType] = None
+
+    @model_validator(mode="after")
+    def validate_no_zero_divisor(self):
+        if self.type == CalculationType.divide and self.b == 0:
+            raise ValueError("Cannot divide by zero")
+        return self
+
+
 class CalculationRead(BaseModel):
     """Schema for returning calculation data, including the computed result."""
     id: int
@@ -60,5 +74,6 @@ class CalculationRead(BaseModel):
     result: Optional[float] = None
     user_id: Optional[int] = None
     created_at: datetime
+    updated_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
