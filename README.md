@@ -31,11 +31,23 @@ Run the test suite with coverage:
 pytest --cov=app --cov-report=term-missing
 ```
 
-This project maintains 95% test coverage across 18 tests, covering
-registration, login, JWT token lifecycle, and protected routes.
+This project maintains high test coverage across **33 tests**, covering
+user registration, login, JWT token lifecycle, protected routes,
+password security, and the Calculation model — including unit tests
+for the factory pattern and schema validation, plus integration tests
+verifying database persistence.
+
 
 ## 🔗 Docker Hub Repository
 
 The image is automatically built and pushed via GitHub Actions on every push to `main`.
 
 **View on Docker Hub:** https://hub.docker.com/r/al7amdulillah/fastapi-user-app
+
+## 🧪 Running Tests Locally
+
+Create and activate a virtual environment:
+
+```bash
+python -m venv venv
+venv\Scripts\activate
