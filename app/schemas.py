@@ -1,5 +1,7 @@
-from pydantic import BaseModel, EmailStr, ConfigDict
+from enum import Enum
+from typing import Optional
 from datetime import datetime
+from pydantic import BaseModel, EmailStr, ConfigDict, model_validator
 
 
 class UserCreate(BaseModel):
@@ -17,7 +19,8 @@ class UserRead(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
-    
+
+
 class LoginRequest(BaseModel):
     username: str
     password: str
@@ -26,3 +29,36 @@ class LoginRequest(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+
+class CalculationType(str, Enum):
+    add = "Add"
+    sub = "Sub"
+    multiply = "Multiply"
+    divide = "Divide"
+
+
+class CalculationCreate(BaseModel):
+    """Schema for creating a new calculation. Validates operands and type."""
+    a: float
+    b: float
+    type: CalculationType
+
+    @model_validator(mode="after")
+    def validate_no_zero_divisor(self):
+        if self.type == CalculationType.divide and self.b == 0:
+            raise ValueError("Cannot divide by zero")
+        return self
+
+
+class CalculationRead(BaseModel):
+    """Schema for returning calculation data, including the computed result."""
+    id: int
+    a: float
+    b: float
+    type: CalculationType
+    result: Optional[float] = None
+    user_id: Optional[int] = None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
