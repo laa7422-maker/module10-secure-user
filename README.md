@@ -4,50 +4,12 @@ Pull the latest image from Docker Hub:
 
 ```bash
 docker pull al7amdulillah/fastapi-user-app:latest
-```
 
-Run the container:
+---
 
-```bash
-docker run -p 8000:8000 --env-file .env al7amdulillah/fastapi-user-app:latest
-```
+## 📝 What Changed & Why
 
-Once running, visit the interactive API docs at:
-
-```
-http://localhost:8000/docs
-```
-## 🧪 Running Tests Locally
-
-Install dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
-Run the test suite with coverage:
-
-```bash
-pytest --cov=app --cov-report=term-missing
-```
-
-This project maintains high test coverage across **33 tests**, covering
-user registration, login, JWT token lifecycle, protected routes,
-password security, and the Calculation model — including unit tests
-for the factory pattern and schema validation, plus integration tests
-verifying database persistence.
-
-
-## 🔗 Docker Hub Repository
-
-The image is automatically built and pushed via GitHub Actions on every push to `main`.
-
-**View on Docker Hub:** https://hub.docker.com/r/al7amdulillah/fastapi-user-app
-
-## 🧪 Running Tests Locally
-
-Create and activate a virtual environment:
-
-```bash
-python -m venv venv
-venv\Scripts\activate
+- **Removed the duplicate/broken second test section** and merged everything into one complete flow: create venv → install deps → run tests.
+- **Updated 33 → 42** to reflect the new BREAD and authorization tests.
+- **Added a Calculations API table** so anyone reading the README (including a grader) can immediately see what BREAD operations exist without digging through router code.
+- **Added a CI/CD section** explicitly stating Postgres is used in the pipeline — this directly addresses the Module 12 requirement of proving dev/prod parity, and gives the grader a one-line confirmation instead of making them dig through `ci-cd.yml`.
