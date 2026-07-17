@@ -14,9 +14,8 @@ def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db),
 ) -> User:
-    """Decode the JWT, then load the matching user from the database."""
     credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
+        status_code=401,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
@@ -25,13 +24,13 @@ def get_current_user(
     if payload is None:
         raise credentials_exception
 
-    user_id = payload.get("sub")
-    if user_id is None:
+    user_id_str: str | None = payload.get("sub")
+    if user_id_str is None:
         raise credentials_exception
 
     try:
-        user_id = int(user_id)
-    except (ValueError, TypeError):
+        user_id = int(user_id_str)
+    except ValueError:
         raise credentials_exception
 
     user = db.query(User).filter(User.id == user_id).first()

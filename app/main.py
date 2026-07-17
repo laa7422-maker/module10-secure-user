@@ -9,8 +9,6 @@ from sqlalchemy.exc import IntegrityError
 from app import models, schemas
 from app.database import engine, get_db, Base
 from app.security import hash_password, verify_password, create_access_token, decode_access_token, oauth2_scheme
-#                                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-#                                                          ⬆️ ADD these two new imports to the existing line
 
 Base.metadata.create_all(bind=engine)
 
@@ -35,7 +33,7 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db.refresh(new_user)
     return new_user
 
-# --- your existing /login route stays exactly as-is ---
+# --- /login route, fixed to use user.id instead of user.username ---
 @app.post("/login", response_model=schemas.Token)
 def login(credentials: schemas.LoginRequest, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.username == credentials.username).first()
@@ -44,12 +42,13 @@ def login(credentials: schemas.LoginRequest, db: Session = Depends(get_db)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
         )
-    token = create_access_token(data={"sub": user.username})
+    token = create_access_token(data={"sub": str(user.id)})  # ✅ FIXED: was user.username
     return {"access_token": token, "token_type": "bearer"}
+
+
 from fastapi.security import OAuth2PasswordBearer
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
 
 def get_current_user(
     token: str = Depends(oauth2_scheme),
@@ -65,15 +64,21 @@ def get_current_user(
     if payload is None:
         raise credentials_exception
 
-    username: str | None = payload.get("sub")
-    if username is None:
+    user_id_str: str | None = payload.get("sub")
+    if user_id_str is None:
         raise credentials_exception
 
-    user = db.query(models.User).filter(models.User.username == username).first()
+    try:
+        user_id = int(user_id_str)
+    except ValueError:
+        raise credentials_exception
+
+    user = db.query(models.User).filter(models.User.id == user_id).first()
     if user is None:
         raise credentials_exception
 
     return user
+
 @app.post("/token")
 def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
@@ -91,16 +96,12 @@ def login_for_access_token(
         )
 
     access_token = security.create_access_token(
-        data={"sub": user.username},
+        data={"sub": str(user.id)},
         expires_delta=timedelta(minutes=security.ACCESS_TOKEN_EXPIRE_MINUTES),
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-
-
-# ⬇️ ⬇️ ⬇️  ADD THIS NEW ROUTE HERE — anywhere after get_current_user is defined  ⬇️ ⬇️ ⬇️
 @app.get("/me", response_model=schemas.UserRead)
 def read_current_user(current_user: models.User = Depends(get_current_user)):
     return current_user
-
