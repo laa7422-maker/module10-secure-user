@@ -57,3 +57,37 @@ retrieving the old value.
 Given more time, I would add rate limiting to the login endpoint to
 protect against brute-force attacks, and implement refresh tokens to
 support longer-lived sessions without compromising security.
+
+# Reflection: Module 10 & 11
+
+## Security Insights
+Password hashing is one-way by design — this protects users even if
+the database itself is compromised, since stored hashes cannot be
+reversed back into plaintext passwords.
+
+## Validation Strategy
+Moving validation into Pydantic schemas (rather than checking inside
+route handlers) ensures malformed data is rejected before it ever
+reaches business logic, keeping the Calculation Factory simpler and
+more trustworthy.
+
+## Defense-in-Depth
+Divide-by-zero protection was implemented in *two* places: the
+Pydantic schema (via model_validator) and the Factory strategy class.
+This redundancy meant that even if one layer was bypassed, the other
+would still catch the invalid operation.
+
+## Challenges Faced
+- Diagnosing a subtle SECRET_KEY environment variable shadowing issue
+  that silently weakened JWT security.
+- Untangling a file-organization issue where test files needed to be
+  moved into tests/unit/ without breaking git tracking or pytest
+  discovery.
+- Building a `db_session` fixture that correctly mirrors the existing
+  `client` fixture's engine/session lifecycle for integration testing.
+
+## CI/CD Takeaways
+Configuring the pipeline to spin up a PostgreSQL service container
+for integration tests, then build and push a Docker image only after
+tests pass, reinforced the value of *fail-fast* pipelines — bad code
+never reaches Docker Hub.

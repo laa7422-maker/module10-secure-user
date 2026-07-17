@@ -1,3 +1,4 @@
+from app.routers import users, calculations
 from app import security
 from datetime import timedelta
 from fastapi.security import OAuth2PasswordRequestForm
@@ -14,6 +15,9 @@ from app.security import hash_password, verify_password, create_access_token, de
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+app.include_router(users.router)
+app.include_router(calculations.router)
 
 
 

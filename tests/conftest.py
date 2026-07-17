@@ -1,3 +1,4 @@
+import os
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -6,12 +7,16 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app.database import Base, get_db
 
-# Separate SQLite file just for tests
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test_temp.db"
+# Use CI/CD's Postgres URL if present, otherwise fall back to local SQLite
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./test_temp.db")
 
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
-)
+if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
+    engine = create_engine(
+        SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+    )
+else:
+    engine = create_engine(SQLALCHEMY_DATABASE_URL)
+
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
@@ -54,3 +59,20 @@ def existing_user(client):
     }
     client.post("/users", json=payload)
     return payload
+
+
+@pytest.fixture
+def auth_headers(client):
+    payload = {
+        "username": "authuser",
+        "email": "authuser@example.com",
+        "password": "securepassword123",
+    }
+    client.post("/users/register", json=payload)
+
+    response = client.post(
+        "/users/login",
+        json={"username": payload["username"], "password": payload["password"]},
+    )
+    token = response.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
