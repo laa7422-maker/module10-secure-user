@@ -1,3 +1,4 @@
+from app.dependencies import get_current_user
 from app.routers import users, calculations
 from app import security
 from datetime import timedelta
@@ -13,6 +14,11 @@ from app.security import hash_password, verify_password, create_access_token, de
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+from fastapi.staticfiles import StaticFiles
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 
 app.include_router(users.router)
 app.include_router(calculations.router)
@@ -36,48 +42,16 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 # --- /login route, fixed to use user.id instead of user.username ---
 @app.post("/login", response_model=schemas.Token)
 def login(credentials: schemas.LoginRequest, db: Session = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.username == credentials.username).first()
+    user = db.query(models.User).filter(models.User.email == credentials.email).first()
     if not user or not verify_password(credentials.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
+            detail="Incorrect email or password",
         )
-    token = create_access_token(data={"sub": str(user.id)})  # ✅ FIXED: was user.username
+    token = create_access_token(data={"sub": str(user.id)})
     return {"access_token": token, "token_type": "bearer"}
 
 
-from fastapi.security import OAuth2PasswordBearer
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
-def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_db),
-) -> models.User:
-    credentials_exception = HTTPException(
-        status_code=401,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
-    payload = security.decode_access_token(token)
-    if payload is None:
-        raise credentials_exception
-
-    user_id_str: str | None = payload.get("sub")
-    if user_id_str is None:
-        raise credentials_exception
-
-    try:
-        user_id = int(user_id_str)
-    except ValueError:
-        raise credentials_exception
-
-    user = db.query(models.User).filter(models.User.id == user_id).first()
-    if user is None:
-        raise credentials_exception
-
-    return user
 
 @app.post("/token")
 def login_for_access_token(

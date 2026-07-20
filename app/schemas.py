@@ -22,7 +22,7 @@ class UserRead(BaseModel):
 
 
 class LoginRequest(BaseModel):
-    username: str
+    email: EmailStr
     password: str
 
 

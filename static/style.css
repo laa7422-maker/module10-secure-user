@@ -1,0 +1,7 @@
+body { font-family: system-ui, sans-serif; background: #f4f4f7; display: flex; justify-content: center; padding-top: 60px; }
+.auth-card { background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); width: 320px; }
+label { display: block; margin-top: 12px; font-size: 0.9rem; }
+input { width: 100%; padding: 8px; margin-top: 4px; border: 1px solid #ccc; border-radius: 6px; }
+button { margin-top: 18px; width: 100%; padding: 10px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; }
+.message.success { color: #16a34a; margin-top: 10px; }
+.message.error { color: #dc2626; margin-top: 10px; }

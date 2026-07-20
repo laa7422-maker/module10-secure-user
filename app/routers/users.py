@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.database import get_db
 from app.models import User
-from app.schemas import UserCreate, UserRead
+from app.schemas import UserCreate, UserRead, LoginRequest
 from app.security import hash_password, verify_password, create_access_token
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -27,13 +27,11 @@ def register(user_in: UserCreate, db: Session = Depends(get_db)):
 
 
 @router.post("/login", status_code=status.HTTP_200_OK)
-def login(credentials: dict, db: Session = Depends(get_db)):
-    username = credentials.get("username")
-    password = credentials.get("password")
-
-    user = db.query(User).filter(User.username == username).first()
-    if not user or not verify_password(password, user.password_hash):
-        raise HTTPException(status_code=401, detail="Invalid username or password")
+def login(credentials: LoginRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == credentials.email).first()
+    if not user or not verify_password(credentials.password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
 
     token = create_access_token({"sub": str(user.id)})
     return {"access_token": token, "token_type": "bearer"}
+
