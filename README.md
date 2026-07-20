@@ -1,9 +1,12 @@
 # FastAPI Secure Calculation API
 
+![CI](https://github.com/laa7422-maker/module10-secure-user/actions/workflows/playwright.yml/badge.svg)
+
 A FastAPI backend providing user registration, JWT-based authentication,
 and full BREAD (Browse, Read, Edit, Add, Delete) operations on calculations,
 scoped per authenticated user. Fully containerized and deployed via a
-GitHub Actions CI/CD pipeline to Docker Hub.
+GitHub Actions CI/CD pipeline, with automated Playwright E2E tests gating
+every Docker Hub release.
 
 ## 🔗 Links
 
@@ -14,57 +17,92 @@ GitHub Actions CI/CD pipeline to Docker Hub.
 ## 🧱 Tech Stack
 
 - FastAPI
-- PostgreSQL + SQLAlchemy
+- PostgreSQL + SQLAlchemy (production) / SQLite (CI + quick local testing)
 - Pydantic v2 (validation)
 - JWT (python-jose) + bcrypt (passlib)
-- Pytest (integration testing)
+- Pytest (unit + integration testing)
+- Playwright (end-to-end browser testing)
 - Docker + GitHub Actions (CI/CD)
 
 ## 🚀 Running Locally
 
 ### 1. Clone the repo
-\`\`\`bash
+```bash
 git clone https://github.com/laa7422-maker/module10-secure-user.git
 cd module10-secure-user
-\`\`\`
+```
 
 ### 2. Set up environment variables
 Create a `.env` file in the project root:
-\`\`\`
+```
 DATABASE_URL=postgresql://user:password@localhost:5432/yourdb
 SECRET_KEY=your-secret-key-here
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
-\`\`\`
+```
+
+> 💡 For quick local testing without Postgres, `DATABASE_URL` falls back to
+> `sqlite:///./test.db` if not set.
 
 ### 3. Install dependencies
-\`\`\`bash
+```bash
 pip install -r requirements.txt
-\`\`\`
+```
 
 ### 4. Run the server
-\`\`\`bash
+```bash
 uvicorn app.main:app --reload
-\`\`\`
+```
 
 The API will be available at `http://localhost:8000`, with interactive
 Swagger docs at `http://localhost:8000/docs`.
 
-## 🧪 Running Tests Locally
+## 🧪 Running Unit & Integration Tests
 
 This project uses `pytest` with a real PostgreSQL database for integration
 testing.
 
-\`\`\`bash
+```bash
 pytest -v
-\`\`\`
+```
 
 To see a coverage report:
-\`\`\`bash
+```bash
 pytest --cov=app --cov-report=term-missing
-\`\`\`
+```
 
 Expected result: **42 passed, 0 failed**.
+
+## 🎭 End-to-End Testing (Playwright)
+
+In addition to unit/integration tests, this project includes a real
+browser-driven E2E suite that exercises the running API through
+Playwright.
+
+### Run locally
+
+```bash
+# 1. Install Playwright browsers (one-time setup)
+playwright install --with-deps chromium
+
+# 2. Start the server in one terminal
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+# 3. Run the E2E suite in another terminal
+pytest tests_e2e/test_auth_e2e.py -v
+```
+
+### Run in CI
+
+Every push triggers `.github/workflows/playwright.yml`, which:
+
+1. Starts the FastAPI app in the background against a disposable SQLite
+   database.
+2. Health-checks the server (`curl`-polls `/docs` for up to 15 attempts)
+   before running any tests — if the server fails to boot, the raw
+   `uvicorn` log is printed directly to the Actions console for fast
+   debugging.
+3. Runs the full Playwright E2E suite against the live server.
 
 ## 🖱️ Manual Testing via OpenAPI (Swagger UI)
 
@@ -93,24 +131,40 @@ You can manually exercise every endpoint without writing any code:
 ## 🐳 Docker
 
 ### Pull the pre-built image
-\`\`\`bash
+```bash
 docker pull al7amdulillah/fastapi-user-app:latest
 docker run -p 8000:8000 --env-file .env al7amdulillah/fastapi-user-app:latest
-\`\`\`
+```
 
 ### Or build it yourself
-\`\`\`bash
+```bash
 docker build -t fastapi-user-app .
 docker run -p 8000:8000 --env-file .env fastapi-user-app
-\`\`\`
+```
 
 ## ⚙️ CI/CD Pipeline
 
-Every push to `main` triggers a GitHub Actions workflow that:
+The pipeline is defined in `.github/workflows/playwright.yml` and runs on
+every push. It's split into two sequential jobs:
 
-1. Spins up a PostgreSQL service container.
-2. Installs dependencies and runs the full `pytest` suite (42 tests).
-3. If — and only if — all tests pass, builds a Docker image and pushes it
-   to Docker Hub tagged `latest`.
+| Job | Trigger | What it does |
+|---|---|---|
+| **`e2e-tests`** | Every push | Installs dependencies + Playwright browsers, boots the FastAPI app with required env vars against a disposable SQLite DB, health-checks it, then runs the Playwright E2E suite (`tests_e2e/test_auth_e2e.py`). |
+| **`build-and-push`** | Only on `main`, only if `e2e-tests` passes | Logs into Docker Hub and builds/pushes the image as `al7amdulillah/fastapi-user-app:latest`. |
 
-This ensures no broken code is ever deployed as a production image.
+This ensures no broken code is ever deployed as a production image — the
+Docker build simply never runs if the E2E suite fails.
+
+### 🔐 Required GitHub Secrets
+
+For the `build-and-push` job to work, configure these under
+**Settings → Secrets and variables → Actions**:
+
+| Secret | Purpose |
+|---|---|
+| `DOCKERHUB_USERNAME` | Docker Hub account used to push the image |
+| `DOCKERHUB_TOKEN` | Docker Hub access token (not your password) |
+
+> **Note:** A legacy `ci-cd.yml` workflow (Postgres-based unit tests) was
+> removed in favor of the unified `playwright.yml` pipeline above, to avoid
+> duplicate/conflicting runs on every push.
