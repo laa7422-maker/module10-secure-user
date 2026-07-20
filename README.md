@@ -12,7 +12,7 @@ every Docker Hub release.
 
 - **GitHub Repository:** https://github.com/laa7422-maker/module10-secure-user
 - **Docker Hub:** https://hub.docker.com/r/al7amdulillah/fastapi-user-app
-- **Reflection:** [REFLECTION_module12.md](./REFLECTION_module12.md)
+- **Reflection:** [REFLECTION_module12.md](./REFLECTION_module13.md)
 
 ## 🧱 Tech Stack
 
@@ -188,3 +188,6 @@ On successful login, the JWT is stored in `localStorage` under `access_token`.
 
 ### Front-End Login Flow — JWT + /me Verification
 ![Front-end UI](screenshots-frontend-ui.png)
+
+### Front-End Registration Flow
+![Registration UI](test%20account%20module%2013.png)
