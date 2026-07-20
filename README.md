@@ -178,3 +178,13 @@ With the server running (`uvicorn app.main:app --reload`), open:
 
 Both pages perform client-side validation before submitting to the API.
 On successful login, the JWT is stored in `localStorage` under `access_token`.
+## Screenshots
+
+### CI/CD Pipeline — GitHub Actions
+![GitHub Actions Success](github%20module%2013.png)
+
+### Playwright E2E Tests — All Passing
+![5 Passed Tests](5%20passed%20tests.png)
+
+### Front-End Login Flow — JWT + /me Verification
+![Front-end UI](screenshots-frontend-ui.png)
