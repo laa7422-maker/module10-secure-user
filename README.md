@@ -168,3 +168,13 @@ For the `build-and-push` job to work, configure these under
 > **Note:** A legacy `ci-cd.yml` workflow (Postgres-based unit tests) was
 > removed in favor of the unified `playwright.yml` pipeline above, to avoid
 > duplicate/conflicting runs on every push.
+
+## 🖥️ Front-End Pages
+
+With the server running (`uvicorn app.main:app --reload`), open:
+
+- **Register:** http://localhost:8000/static/register.html
+- **Login:** http://localhost:8000/static/login.html
+
+Both pages perform client-side validation before submitting to the API.
+On successful login, the JWT is stored in `localStorage` under `access_token`.
