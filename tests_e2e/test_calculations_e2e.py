@@ -33,6 +33,9 @@ def register_and_login(page: Page):
 
 def goto_calculations(page: Page):
     page.goto(f"{BASE_URL}/static/calculations.html")
+    page.wait_for_load_state("networkidle")
+    print("DEBUG URL:", page.url)
+    print("DEBUG TOKEN:", page.evaluate("() => localStorage.getItem('access_token')"))
 
 
 def row_locator(page: Page, text: str):
