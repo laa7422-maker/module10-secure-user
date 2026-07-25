@@ -51,7 +51,7 @@ jobs:
           SECRET_KEY: test-secret-key
           ALGORITHM: HS256
           ACCESS_TOKEN_EXPIRE_MINUTES: 30
-        run: run: pytest tests_e2e/test_auth_e2e.py tests_e2e/test_calculations_e2e.py -v
+        run: pytest tests_e2e/test_auth_e2e.py tests_e2e/test_calculations_e2e.py -v
 
   build-and-push:
     needs: e2e-tests
