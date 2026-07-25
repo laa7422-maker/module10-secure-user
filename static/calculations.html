@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>My Calculations</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>My Calculations</h1>
+    <button id="logout-btn">Logout</button>
+  </header>
+
+  <div id="message" class="message"></div>
+
+  <!-- Add / Edit form (shared) -->
+  <form id="calc-form">
+    <input type="hidden" id="calc-id" value="" />
+
+    <label for="a">Operand A</label>
+    <input type="number" id="a" step="any" required />
+
+    <label for="b">Operand B</label>
+    <input type="number" id="b" step="any" required />
+
+    <label for="type">Operation</label>
+    <select id="type" required>
+      <option value="Add">Add</option>
+      <option value="Sub">Subtract</option>
+      <option value="Multiply">Multiply</option>
+      <option value="Divide">Divide</option>
+    </select>
+
+    <button type="submit" id="submit-btn">Add Calculation</button>
+    <button type="button" id="cancel-edit-btn" style="display:none;">Cancel</button>
+  </form>
+
+  <!-- Browse -->
+  <table id="calc-table">
+    <thead>
+      <tr>
+        <th>A</th>
+        <th>B</th>
+        <th>Type</th>
+        <th>Result</th>
+        <th>Created</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="calc-table-body">
+      <!-- rows injected by calculations.js -->
+    </tbody>
+  </table>
+
+  <script src="js/calculations.js"></script>
+</body>
+</html>
