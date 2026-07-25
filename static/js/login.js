@@ -31,6 +31,12 @@ form.addEventListener("submit", async (e) => {
       // Use the stored token to make an authenticated request,
       // confirming the JWT actually works end-to-end.
       await loadCurrentUser(data.access_token);
+
+      // Give the user a moment to see the success message,
+      // then redirect to the calculations page.
+      setTimeout(() => {
+        window.location.href = "calculations.html";
+      }, 800);
     } else {
       message.textContent = data.detail || "Invalid email or password.";
       message.classList.add("error");

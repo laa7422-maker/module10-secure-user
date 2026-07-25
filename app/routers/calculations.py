@@ -39,7 +39,10 @@ def add_calculation(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    result = CalculationFactory.create(calc_in.type.value, calc_in.a, calc_in.b)
+    try:
+        result = CalculationFactory.create(calc_in.type.value, calc_in.a, calc_in.b)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
 
     calc = Calculation(
         a=calc_in.a,
