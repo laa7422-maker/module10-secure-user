@@ -191,3 +191,36 @@ On successful login, the JWT is stored in `localStorage` under `access_token`.
 
 ### Front-End Registration Flow
 ![Registration UI](test%20account%20module%2013.png)
+# FastAPI Secure Calculation API
+
+![CI](https://github.com/laa7422-maker/module10-secure-user/actions/workflows/playwright.yml/badge.svg)
+
+A FastAPI backend providing user registration, JWT-based authentication,
+and full BREAD (Browse, Read, Edit, Add, Delete) operations on calculations,
+scoped per authenticated user. Fully containerized and deployed via a
+GitHub Actions CI/CD pipeline, with automated Playwright E2E tests gating
+every Docker Hub release.
+
+## 🔗 Links
+
+- **GitHub Repository:** https://github.com/laa7422-maker/module10-secure-user
+- **Docker Hub:** https://hub.docker.com/r/al7amdulillah/fastapi-user-app
+- **Reflection:** [REFLECTION_module14.md](./REFLECTION_module14.md)
+
+## 🧱 Tech Stack
+
+- FastAPI
+- PostgreSQL + SQLAlchemy (production) / SQLite (CI + quick local testing)
+- Pydantic v2 (validation)
+- JWT (python-jose) + bcrypt (passlib)
+- Pytest (unit + integration testing)
+- Playwright (end-to-end browser testing)
+- Docker + GitHub Actions (CI/CD)
+
+## 🚀 Running Locally
+
+### 1. Clone the repo
+```bash
+git clone https://github.com/laa7422-maker/module10-secure-user.git
+cd module10-secure-user
+
