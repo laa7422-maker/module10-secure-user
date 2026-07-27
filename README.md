@@ -208,9 +208,6 @@ and the user is automatically redirected to the calculations dashboard.
 ### Docker Hub — Image Successfully Pushed
 ![Docker Hub Deployment](screenshots/docker%20hub%20screen%20shot%20module%2014.png)
 
-### Front-End — Browse (Multiple Calculations)
-![Browse Calculations](screenshots/browse-multiple-calculations.png)
-
 ### Front-End — Add Calculation
 ![Add Calculation](screenshots/C%20%26%20R%20in%20Bread.png)
 
@@ -220,11 +217,14 @@ and the user is automatically redirected to the calculations dashboard.
 ### Front-End — Delete Calculation
 ![Delete Calculation](screenshots/delete%20button.png)
 
-### Local E2E Test Run — All Calculation Tests Passing
+### Local E2E Test Run — All Calculation Tests Passing (Including Browse)
 ![Local Test Run](screenshots/actions%20run.png)
 
 ### Front-End Login Flow
 ![Login Success](screenshots/log%20in%20successful%20module%2013.png)
+
+### Front-End Registration Flow
+![Registration UI](screenshots/test%20account%20module%2013.png)
 
 ### Front-End Registration Flow
 ![Registration UI](screenshots/test%20account%20module%2013.png)
