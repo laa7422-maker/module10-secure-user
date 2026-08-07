@@ -27,6 +27,9 @@ jobs:
       - name: Install Playwright browsers
         run: playwright install --with-deps chromium
 
+      - name: Run database migrations
+        run: alembic upgrade head
+
       - name: Start FastAPI server
         env:
           SECRET_KEY: test-secret-key
