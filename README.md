@@ -47,6 +47,40 @@ throughout, satisfying CLO13:
 - **Input validation:** All request bodies are validated through
   Pydantic v2 schemas, rejecting malformed or out-of-range input with
   `422 Unprocessable Entity` before it ever reaches business logic.
+- **Self-service password changes:** Authenticated users can change
+  their own password via `POST /users/me/password`, which requires
+  re-verification of the *current* password (bcrypt comparison) before
+  the new one is hashed and stored — preventing session-hijacking
+  attacks from silently taking over an account.
+
+
+## 👤 User Profile & Password Management
+
+Authenticated users can view and update their own profile, and change
+their password, through both the API and a dedicated front-end page.
+
+### API Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `PATCH` | `/users/me` | Update `full_name` on the current user's profile |
+| `POST` | `/users/me/password` | Change the current user's password (requires current password verification) |
+
+Both endpoints require a valid JWT in the `Authorization: Bearer <token>`
+header, and both are covered by unit tests (`tests/test_security.py`),
+integration tests (`tests/test_users.py`), and a full browser-level E2E
+test (`tests_e2e/test_profile_e2e.py`).
+
+### Try it in the browser
+
+1. Register and log in via `/static/login.html`.
+2. Navigate to `/static/profile.html`.
+3. Update your full name and click **Save Profile** — confirms the
+   `PATCH /users/me` flow.
+4. Enter your current password and a new password, then click
+   **Change Password** — confirms the `POST /users/me/password` flow.
+5. Log out and log back in using the **new** password to verify the
+   change persisted.
 
 ## 🚀 Running Locally
 
@@ -106,24 +140,32 @@ BREAD flow.
     uvicorn app.main:app --host 0.0.0.0 --port 8000
 
     # 3. Run the full E2E suite in another terminal
-    pytest tests_e2e/test_auth_e2e.py tests_e2e/test_calculations_e2e.py -v
+    pytest tests_e2e/test_auth_e2e.py tests_e2e/test_calculations_e2e.py tests_e2e/test_profile_e2e.py -v
 
-Expected result: **15 passed** — covering registration, login, and the
-full Browse/Add/Edit/Delete calculation flow, plus authorization edge
-cases (invalid input, missing token, cross-user access, nonexistent
-records).
+Expected result: **18 passed** — covering registration, login, the
+full Browse/Add/Edit/Delete calculation flow, profile updates and
+password changes, plus authorization edge cases (invalid input, missing
+token, cross-user access, nonexistent records, incorrect current
+password, mismatched password confirmation).
 
 ### Run in CI
 
 Every push triggers `.github/workflows/playwright.yml`, which:
 
-1. Starts the FastAPI app in the background against a disposable SQLite
+1. Applies database migrations with `alembic upgrade head`.
+2. Runs the full unit and integration suite (`pytest tests/ -v`) —
+   this must pass before any E2E test is attempted, keeping fast
+   failures fast.
+3. Starts the FastAPI app in the background against a disposable SQLite
    database.
-2. Health-checks the server (`curl`-polls `/docs` for up to 15 attempts)
+4. Health-checks the server (`curl`-polls `/docs` for up to 15 attempts)
    before running any tests — if the server fails to boot, the raw
    `uvicorn` log is printed directly to the Actions console for fast
    debugging.
-3. Runs the full Playwright E2E suite against the live server.
+5. Runs the full Playwright E2E suite (auth + calculations + profile)
+   against the live server.
+6. On merge to `main`, builds and pushes a fresh Docker image to
+   Docker Hub — but only if every step above succeeds.
 
 ## 🖱️ Manual Testing via OpenAPI (Swagger UI)
 
@@ -168,11 +210,9 @@ every push. It's split into two sequential jobs:
 
 | Job | Trigger | What it does |
 |---|---|---|
-| **`e2e-tests`** | Every push | Installs dependencies + Playwright browsers, boots the FastAPI app with required env vars against a disposable SQLite DB, health-checks it, then runs the Playwright E2E suite (`tests_e2e/test_auth_e2e.py`, `tests_e2e/test_calculations_e2e.py`). |
-| **`build-and-push`** | Only on `main`, only if `e2e-tests` passes | Logs into Docker Hub and builds/pushes the image as `al7amdulillah/fastapi-user-app:latest`. |
+| `e2e-tests` | Every push | Applies Alembic migrations (`alembic upgrade head`), runs the unit/integration suite (`pytest tests/ -v`) as a fast-fail gate, installs Playwright browsers, boots the FastAPI app against a disposable SQLite DB, health-checks it, then runs the full Playwright E2E suite (`tests_e2e/test_auth_e2e.py`, `tests_e2e/test_calculations_e2e.py`, `tests_e2e/test_profile_e2e.py`). |
 
-This ensures no broken code is ever deployed as a production image — the
-Docker build simply never runs if the E2E suite fails.
+This ensures no broken code is ever deployed as a production image — the Docker build never runs if *any* of the three gates (unit tests, integration tests, or E2E tests) fail.
 
 ### 🔐 Required GitHub Secrets
 
@@ -192,13 +232,12 @@ For the `build-and-push` job to work, configure these under
 
 With the server running (`uvicorn app.main:app --reload`), open:
 
-- **Register:** http://localhost:8000/static/register.html
-- **Login:** http://localhost:8000/static/login.html
-- **Calculations Dashboard:** http://localhost:8000/static/calculations.html
+Register: http://localhost:8000/static/register.html
+Login: http://localhost:8000/static/login.html
+Calculations Dashboard: http://localhost:8000/static/calculations.html
+Profile & Password Change: http://localhost:8000/static/profile.html
 
-All three pages perform client-side validation before submitting to the API.
-On successful login, the JWT is stored in `localStorage` under `access_token`,
-and the user is automatically redirected to the calculations dashboard.
+All pages perform client-side validation before submitting to the API. On successful login, the JWT is stored in localStorage under access_token, and the user is automatically redirected to the calculations dashboard. The profile page reuses this same stored token to authenticate `PATCH /users/me` and `POST /users/me/password` requests, and redirects back to the login page after a successful password change so the user can confirm the new credentials work.
 
 ## Screenshots
 
