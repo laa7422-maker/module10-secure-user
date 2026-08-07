@@ -30,6 +30,13 @@ jobs:
       - name: Run database migrations
         run: alembic upgrade head
 
+      - name: Run unit and integration tests
+        env:
+          SECRET_KEY: test-secret-key
+          ALGORITHM: HS256
+          ACCESS_TOKEN_EXPIRE_MINUTES: 30
+        run: pytest tests/ -v
+
       - name: Start FastAPI server
         env:
           SECRET_KEY: test-secret-key
@@ -54,7 +61,7 @@ jobs:
           SECRET_KEY: test-secret-key
           ALGORITHM: HS256
           ACCESS_TOKEN_EXPIRE_MINUTES: 30
-        run: pytest tests_e2e/test_auth_e2e.py tests_e2e/test_calculations_e2e.py -v --screenshot=only-on-failure --output=test-results
+        run: pytest tests_e2e/test_auth_e2e.py tests_e2e/test_calculations_e2e.py tests_e2e/test_profile_e2e.py -v --screenshot=only-on-failure --output=test-results
 
       - name: Upload failure screenshots
         if: failure()
