@@ -149,7 +149,7 @@ def test_user_cannot_access_another_users_calculation(client, auth_headers):
     login_response = client.post(
         "/users/login",
         json={
-            "username": other_user_payload["username"],
+            "email": other_user_payload["email"],
             "password": other_user_payload["password"],
         },
     )

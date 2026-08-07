@@ -57,7 +57,7 @@ def existing_user(client):
         "email": "loginuser@example.com",
         "password": "correctpassword123",
     }
-    client.post("/users", json=payload)
+    client.post("/users/register", json=payload)   # ← "/users" → "/users/register"
     return payload
 
 
@@ -72,7 +72,7 @@ def auth_headers(client):
 
     response = client.post(
         "/users/login",
-        json={"username": payload["username"], "password": payload["password"]},
+        json={"email": payload["email"], "password": payload["password"]},
     )
     token = response.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}

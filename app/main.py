@@ -23,36 +23,6 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 app.include_router(users.router)
 app.include_router(calculations.router)
 
-
-
-# --- your existing /users route stays exactly as-is ---
-@app.post("/users", response_model=schemas.UserRead, status_code=status.HTTP_201_CREATED)
-def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    hashed_pw = hash_password(user.password)
-    new_user = models.User(username=user.username, email=user.email, password_hash=hashed_pw)
-    db.add(new_user)
-    try:
-        db.commit()
-    except IntegrityError:
-        db.rollback()
-        raise HTTPException(status_code=400, detail="Username or email already exists.")
-    db.refresh(new_user)
-    return new_user
-
-# --- /login route, fixed to use user.id instead of user.username ---
-@app.post("/login", response_model=schemas.Token)
-def login(credentials: schemas.LoginRequest, db: Session = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.email == credentials.email).first()
-    if not user or not verify_password(credentials.password, user.password_hash):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-        )
-    token = create_access_token(data={"sub": str(user.id)})
-    return {"access_token": token, "token_type": "bearer"}
-
-
-
 @app.post("/token")
 def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
